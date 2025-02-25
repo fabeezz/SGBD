@@ -1,0 +1,1765 @@
+-- ###########################################################
+-- ////////////////////// CREATE /////////////////////////////
+-- ###########################################################
+
+-- /////////////////////////// Tara //////////////////////////
+CREATE TABLE Tara (
+    id_tara NUMBER(5) PRIMARY KEY,
+    nume_tara VARCHAR2(50) NOT NULL UNIQUE,
+    salariu_mediu NUMBER(5) NOT NULL CHECK (salariu_mediu >= 0)
+);
+DESCRIBE Tara;
+
+-- /////////////////////////// Locatie ///////////////////////////
+CREATE TABLE Locatie (
+    id_locatie NUMBER(5) PRIMARY KEY,
+    id_tara NUMBER(5) NOT NULL,
+    oras VARCHAR2(25) NOT NULL UNIQUE,
+    CONSTRAINT fk_locatie_tara FOREIGN KEY (id_tara) REFERENCES Tara(id_tara)
+);
+DESCRIBE Locatie;
+
+-- /////////////////////////// Developer ///////////////////////////
+CREATE TABLE Developer (
+    id_developer NUMBER(5) PRIMARY KEY,
+    id_locatie NUMBER(5),
+    nume_developer VARCHAR2(50) NOT NULL,
+    data_lansare_studio DATE NOT NULL,
+    salariu_angajati NUMBER(5) NOT NULL CHECK (salariu_angajati > 0),
+    CONSTRAINT fk_developer_locatie FOREIGN KEY (id_locatie) REFERENCES Locatie(id_locatie)
+);
+
+DESCRIBE Developer;
+
+-- /////////////////////////// Joc ///////////////////////////
+CREATE TABLE Joc (
+    id_joc NUMBER(5) PRIMARY KEY,
+    id_developer NUMBER(5) NOT NULL,
+    nume_joc VARCHAR2(50) NOT NULL UNIQUE,
+    pret_joc NUMBER(5) NOT NULL CHECK (pret_joc >= 0),
+    data_lansare_joc DATE NOT NULL,
+    varsta_recomandata NUMBER(3) CHECK (varsta_recomandata >= 0),
+    rating NUMBER(1) CHECK (rating BETWEEN 1 AND 5),
+    CONSTRAINT fk_joc_developer FOREIGN KEY (id_developer) REFERENCES Developer(id_developer)
+);
+DESCRIBE Joc;
+
+-- /////////////////////////// Utilizator ///////////////////////////
+CREATE TABLE Utilizator (
+    id_utilizator NUMBER(5) PRIMARY KEY,
+    id_tara NUMBER(5) NOT NULL,
+    nume_utilizator VARCHAR2(50) NOT NULL,
+    parola VARCHAR2(50) NOT NULL,
+    email VARCHAR2(50) NOT NULL UNIQUE,
+    varsta NUMBER(3) NOT NULL CHECK (varsta >= 0),
+    CONSTRAINT fk_utilizator_tara FOREIGN KEY (id_tara) REFERENCES Tara(id_tara)
+);
+DESCRIBE Utilizator;
+
+-- /////////////////////////// Notificare ///////////////////////////
+CREATE TABLE Notificare (
+    id_notificare NUMBER(5) PRIMARY KEY,
+    id_utilizator NUMBER(5) NOT NULL,
+    text_notificare VARCHAR2(50) NOT NULL,
+    CONSTRAINT fk_notificare_utilizator FOREIGN KEY (id_utilizator) REFERENCES Utilizator(id_utilizator)
+);
+DESCRIBE Notificare;
+
+-- /////////////////////////// Mesaj ///////////////////////////
+CREATE TABLE Mesaj (
+    id_mesaj NUMBER(5) PRIMARY KEY,
+    id_notificare NUMBER(5) NOT NULL,
+    text_mesaj VARCHAR2(256) NOT NULL,
+    este_citit NUMBER(1) NOT NULL CHECK (este_citit IN (0, 1)),
+    CONSTRAINT fk_mesaj_notificare FOREIGN KEY (id_notificare) REFERENCES Notificare(id_notificare)
+);
+DESCRIBE Mesaj;
+
+-- /////////////////////////// Recenzie ///////////////////////////
+CREATE TABLE Recenzie (
+    id_recenzie NUMBER(5) PRIMARY KEY,
+    id_utilizator NUMBER(5) NOT NULL,
+    id_joc NUMBER(5) NOT NULL,
+    text_recenzie VARCHAR2(256) NOT NULL,
+    data_recenzie DATE NOT NULL,
+    CONSTRAINT fk_recenzie_utilizator FOREIGN KEY (id_utilizator) REFERENCES Utilizator(id_utilizator),
+    CONSTRAINT fk_recenzie_joc FOREIGN KEY (id_joc) REFERENCES Joc(id_joc)
+);
+DESCRIBE Recenzie;
+
+-- /////////////////////////// Colectie ///////////////////////////
+CREATE TABLE Colectie (
+    id_colectie NUMBER(5) PRIMARY KEY,
+    id_utilizator NUMBER(5) NOT NULL,
+    nume_colectie VARCHAR2(50) NOT NULL,
+    CONSTRAINT fk_colectie_utilizator FOREIGN KEY (id_utilizator) REFERENCES Utilizator(id_utilizator)
+);
+DESCRIBE Colectie;
+
+-- /////////////////////////// Colectie_Joc ///////////////////////////
+CREATE TABLE Colectie_Joc (
+    id_colectie NUMBER(5) NOT NULL,
+    id_joc NUMBER(5) NOT NULL,
+    PRIMARY KEY (id_colectie, id_joc),
+    CONSTRAINT fk_colectie_joc_colectie FOREIGN KEY (id_colectie) REFERENCES Colectie(id_colectie),
+    CONSTRAINT fk_colectie_joc_joc FOREIGN KEY (id_joc) REFERENCES Joc(id_joc)
+);
+DESCRIBE Colectie_Joc;
+
+-- /////////////////////////// Inventar ///////////////////////////
+CREATE TABLE Inventar (
+    id_inventar NUMBER(5) PRIMARY KEY,
+    id_utilizator NUMBER(5) NOT NULL,
+    capacitate NUMBER(2) NOT NULL CHECK (capacitate > 0),
+    CONSTRAINT fk_inventar_utilizator FOREIGN KEY (id_utilizator) REFERENCES Utilizator(id_utilizator)
+);
+DESCRIBE Inventar;
+
+-- /////////////////////////// Item ///////////////////////////
+CREATE TABLE Item (
+    id_item NUMBER(5) PRIMARY KEY,
+    id_joc NUMBER(5) NOT NULL,
+    nume_item VARCHAR2(100) NOT NULL,
+    pret_item NUMBER(10, 2),
+    raritate_item VARCHAR2(50) NOT NULL,
+    CONSTRAINT fk_item_joc FOREIGN KEY (id_joc) REFERENCES Joc(id_joc)
+);
+DESCRIBE Item;
+
+-- /////////////////////////// Inventar_Item ///////////////////////////
+CREATE TABLE Inventar_Item (
+    id_item NUMBER(5) NOT NULL,
+    id_inventar NUMBER(5) NOT NULL,
+    PRIMARY KEY (id_item, id_inventar),
+    CONSTRAINT fk_inventar_item_item FOREIGN KEY (id_item) REFERENCES Item(id_item),
+    CONSTRAINT fk_inventar_item_inventar FOREIGN KEY (id_inventar) REFERENCES Inventar(id_inventar)
+);
+
+DESCRIBE Inventar_Item;
+
+-- /////////////////////////// Tranzactie ///////////////////////////
+CREATE TABLE Tranzactie (
+    id_tranzactie NUMBER(5) PRIMARY KEY,
+    id_utilizator NUMBER(5) NOT NULL,
+    metoda_tranzactie VARCHAR2(25) NOT NULL,
+    suma_tranzactie NUMBER(5) NOT NULL CHECK (suma_tranzactie >= 0),
+    data_tranzactie DATE NOT NULL ,
+    CONSTRAINT fk_depozit_utilizator FOREIGN KEY (id_utilizator) REFERENCES Utilizator(id_utilizator)
+);
+DESCRIBE Tranzactie;
+
+-- ###########################################################
+-- ////////////////////// INSERT /////////////////////////////
+-- ###########################################################
+
+-- /////////////////////////// Tara ///////////////////////////
+
+CREATE SEQUENCE seq_tara
+START WITH 1
+INCREMENT BY 1
+MINVALUE 1
+MAXVALUE 12;
+
+SELECT * FROM Tara;
+INSERT INTO Tara (id_tara, nume_tara, salariu_mediu) 
+VALUES (seq_tara.nextval, 'SUA', 55000);
+INSERT INTO Tara (id_tara, nume_tara, salariu_mediu) 
+VALUES (seq_tara.nextval, 'Japonia', 40000);
+INSERT INTO Tara (id_tara, nume_tara, salariu_mediu) 
+VALUES (seq_tara.nextval, 'Canada', 45000);
+INSERT INTO Tara (id_tara, nume_tara, salariu_mediu) 
+VALUES (seq_tara.nextval, 'Franta', 43000);
+INSERT INTO Tara (id_tara, nume_tara, salariu_mediu) 
+VALUES (seq_tara.nextval, 'Romania', 12000);
+INSERT INTO Tara (id_tara, nume_tara, salariu_mediu) 
+VALUES (seq_tara.nextval, 'Polonia', 27000);
+INSERT INTO Tara (id_tara, nume_tara, salariu_mediu) 
+VALUES (seq_tara.nextval, 'Suedia', 42000); 
+INSERT INTO Tara (id_tara, nume_tara, salariu_mediu) 
+VALUES (seq_tara.nextval, 'Rusia', 15000); 
+INSERT INTO Tara (id_tara, nume_tara, salariu_mediu) 
+VALUES (seq_tara.nextval, 'Estonia', 23000); 
+INSERT INTO Tara (id_tara, nume_tara, salariu_mediu) 
+VALUES (seq_tara.nextval, 'Germania', 65000); 
+INSERT INTO Tara (id_tara, nume_tara, salariu_mediu) 
+VALUES (seq_tara.nextval, 'Spania', 27000); 
+INSERT INTO Tara (id_tara, nume_tara, salariu_mediu) 
+VALUES (seq_tara.nextval, 'Austria', 43000); 
+
+-- /////////////////////////// Locatie ///////////////////////////
+SELECT * FROM Locatie;
+INSERT INTO Locatie (id_locatie, id_tara, oras) 
+VALUES (1, 3, 'Montreal'); -- Canada, Ubisoft Montreal
+INSERT INTO Locatie (id_locatie, id_tara, oras) 
+VALUES (2, 1, 'Redmond'); -- SUA, 343 Industries
+INSERT INTO Locatie (id_locatie, id_tara, oras) 
+VALUES (3, 6, 'Varsovia'); -- Polonia, CD Projekt Red
+INSERT INTO Locatie (id_locatie, id_tara, oras) 
+VALUES (4, 1, 'Santa Monica'); -- SUA, Naughty Dog
+INSERT INTO Locatie (id_locatie, id_tara, oras) 
+VALUES (5, 2, 'Tokyo'); -- Japonia, Kojima Productions
+INSERT INTO Locatie (id_locatie, id_tara, oras) 
+VALUES (6, 1, 'Bellevue'); -- SUA, Valve
+INSERT INTO Locatie (id_locatie, id_tara, oras) 
+VALUES (7, 1, 'New York'); -- SUA, Rockstar Games
+INSERT INTO Locatie (id_locatie, id_tara, oras) 
+VALUES (8, 1, 'Dallas'); -- SUA, id Software
+INSERT INTO Locatie (id_locatie, id_tara, oras) 
+VALUES (9, 1, 'Frisco'); -- SUA, Gearbox Software
+INSERT INTO Locatie (id_locatie, id_tara, oras) 
+VALUES (10, 7, 'Stockholm'); -- Suedia, Mojang Studios
+INSERT INTO Locatie (id_locatie, id_tara, oras) 
+VALUES (11, 3, 'Vancouver'); -- Canada, EA Vancouver, FIFA23
+INSERT INTO Locatie (id_locatie, id_tara, oras) 
+VALUES (12, 5, 'Bucuresti'); -- Romania, EAFC 24
+INSERT INTO Locatie (id_locatie, id_tara, oras) 
+VALUES (13, 8, 'Moscova'); -- Rusia
+INSERT INTO Locatie (id_locatie, id_tara, oras) 
+VALUES (14, 9, 'Tallinn'); -- Estonia
+INSERT INTO Locatie (id_locatie, id_tara, oras) 
+VALUES (15, 10, 'Koln'); -- Germania
+INSERT INTO Locatie (id_locatie, id_tara, oras) 
+VALUES (16, 11, 'Madrid'); -- Spania
+INSERT INTO Locatie (id_locatie, id_tara, oras) 
+VALUES (17, 12, 'Viena'); -- Austria
+
+-- /////////////////////////// Developer ///////////////////////////
+SELECT * FROM Developer;
+INSERT INTO Developer (id_developer, id_locatie, nume_developer, data_lansare_studio, salariu_angajati)
+VALUES (1, 1, 'Ubisoft Montreal', TO_DATE('1997-01-01', 'YYYY-MM-DD'), 44000); -- Sub medie in Canada
+INSERT INTO Developer (id_developer, id_locatie, nume_developer, data_lansare_studio, salariu_angajati)
+VALUES (2, 2, '343 Industries', TO_DATE('2007-05-01', 'YYYY-MM-DD'), 53000); -- Sub medie in SUA
+INSERT INTO Developer (id_developer, id_locatie, nume_developer, data_lansare_studio, salariu_angajati)
+VALUES (3, 3, 'CD Projekt Red', TO_DATE('2002-06-01', 'YYYY-MM-DD'), 26000); -- Sub medie in Polonia
+INSERT INTO Developer (id_developer, id_locatie, nume_developer, data_lansare_studio, salariu_angajati)
+VALUES (4, 4, 'Naughty Dog', TO_DATE('1984-09-01', 'YYYY-MM-DD'), 60000); -- Peste medie in SUA
+INSERT INTO Developer (id_developer, id_locatie, nume_developer, data_lansare_studio, salariu_angajati)
+VALUES (5, 5, 'Kojima Productions', TO_DATE('2005-12-01', 'YYYY-MM-DD'), 45000); -- Peste medie in Japonia
+INSERT INTO Developer (id_developer, id_locatie, nume_developer, data_lansare_studio, salariu_angajati)
+VALUES (6, 6, 'Valve Corporation', TO_DATE('1996-08-01', 'YYYY-MM-DD'), 70000); -- Peste medie in SUA
+INSERT INTO Developer (id_developer, id_locatie, nume_developer, data_lansare_studio, salariu_angajati)
+VALUES (7, 7, 'Rockstar Games', TO_DATE('1998-12-01', 'YYYY-MM-DD'), 65000); -- Peste medie in SUA
+INSERT INTO Developer (id_developer, id_locatie, nume_developer, data_lansare_studio, salariu_angajati)
+VALUES (8, 8, 'id Software', TO_DATE('1991-02-01', 'YYYY-MM-DD'), 62000); -- Peste medie in SUA
+INSERT INTO Developer (id_developer, id_locatie, nume_developer, data_lansare_studio, salariu_angajati)
+VALUES (9, 9, 'Gearbox Software', TO_DATE('1999-02-01', 'YYYY-MM-DD'), 58000); -- Peste medie in SUA
+INSERT INTO Developer (id_developer, id_locatie, nume_developer, data_lansare_studio, salariu_angajati)
+VALUES (10, 10, 'Mojang Studios', TO_DATE('2009-05-01', 'YYYY-MM-DD'), 50000); -- Peste medie in Suedia
+INSERT INTO Developer (id_developer, id_locatie, nume_developer, data_lansare_studio, salariu_angajati)
+VALUES (11, 12, 'EA Romania', TO_DATE('2016-03-01', 'YYYY-MM-DD'), 21000); -- Peste medie in Romania
+INSERT INTO Developer (id_developer, id_locatie, nume_developer, data_lansare_studio, salariu_angajati)
+VALUES (12, 11, 'EA Vancouver', TO_DATE('1983-01-01', 'YYYY-MM-DD'), 46000); -- Peste medie in Canada
+
+-- /////////////////////////// Joc ///////////////////////////
+SELECT * FROM Joc;
+INSERT INTO Joc (id_joc, id_developer, nume_joc, pret_joc, data_lansare_joc, varsta_recomandata, rating)
+VALUES (1, 1, 'Assassins Creed Valhalla', 60, TO_DATE('2020-11-10', 'YYYY-MM-DD'), 18, 4);
+INSERT INTO Joc (id_joc, id_developer, nume_joc, pret_joc, data_lansare_joc, varsta_recomandata, rating)
+VALUES (2, 2, 'Halo Infinite', 60, TO_DATE('2021-12-08', 'YYYY-MM-DD'), 16, 3);
+INSERT INTO Joc (id_joc, id_developer, nume_joc, pret_joc, data_lansare_joc, varsta_recomandata, rating)
+VALUES (3, 3, 'Cyberpunk 2077', 60, TO_DATE('2020-12-10', 'YYYY-MM-DD'), 18, 3);
+INSERT INTO Joc (id_joc, id_developer, nume_joc, pret_joc, data_lansare_joc, varsta_recomandata, rating)
+VALUES (4, 4, 'The Last of Us Part II', 60, TO_DATE('2020-06-19', 'YYYY-MM-DD'), 18, 5);
+INSERT INTO Joc (id_joc, id_developer, nume_joc, pret_joc, data_lansare_joc, varsta_recomandata, rating)
+VALUES (5, 5, 'Death Stranding', 60, TO_DATE('2019-11-08', 'YYYY-MM-DD'), 16, 4);
+INSERT INTO Joc (id_joc, id_developer, nume_joc, pret_joc, data_lansare_joc, varsta_recomandata, rating)
+VALUES (6, 6, 'Ghost of Tsushima', 60, TO_DATE('2020-07-17', 'YYYY-MM-DD'), 18, 4);
+INSERT INTO Joc (id_joc, id_developer, nume_joc, pret_joc, data_lansare_joc, varsta_recomandata, rating)
+VALUES (7, 5, 'Monster Hunter World', 60, TO_DATE('2018-01-26', 'YYYY-MM-DD'), 16, 4);
+INSERT INTO Joc (id_joc, id_developer, nume_joc, pret_joc, data_lansare_joc, varsta_recomandata, rating)
+VALUES (8, 7, 'Red Dead Redemption 2', 60, TO_DATE('2018-10-26', 'YYYY-MM-DD'), 18, 5);
+INSERT INTO Joc (id_joc, id_developer, nume_joc, pret_joc, data_lansare_joc, varsta_recomandata, rating)
+VALUES (9, 8, 'Doom Eternal', 60, TO_DATE('2020-03-20', 'YYYY-MM-DD'), 18, 4);
+INSERT INTO Joc (id_joc, id_developer, nume_joc, pret_joc, data_lansare_joc, varsta_recomandata, rating)
+VALUES (10, 9, 'Borderlands 3', 60, TO_DATE('2019-09-13', 'YYYY-MM-DD'), 18, 4);
+INSERT INTO Joc (id_joc, id_developer, nume_joc, pret_joc, data_lansare_joc, varsta_recomandata, rating)
+VALUES (11, 10, 'Minecraft', 30, TO_DATE('2011-11-18', 'YYYY-MM-DD'), 10, 5);
+INSERT INTO Joc (id_joc, id_developer, nume_joc, pret_joc, data_lansare_joc, varsta_recomandata, rating)
+VALUES (12, 11, 'EAFC 24', 60, TO_DATE('2030-09-30', 'YYYY-MM-DD'), 3, 4);
+INSERT INTO Joc (id_joc, id_developer, nume_joc, pret_joc, data_lansare_joc, varsta_recomandata, rating)
+VALUES (13, 12, 'FIFA 23', 60, TO_DATE('2022-09-30', 'YYYY-MM-DD'), 3, 3);
+INSERT INTO Joc (id_joc, id_developer, nume_joc, pret_joc, data_lansare_joc, varsta_recomandata, rating)
+VALUES (14, 6, 'CS:GO', 0, TO_DATE('2012-08-21', 'YYYY-MM-DD'), 16, 5);
+INSERT INTO Joc (id_joc, id_developer, nume_joc, pret_joc, data_lansare_joc, varsta_recomandata, rating)
+VALUES (15, 6, 'TF2', 0, TO_DATE('2007-10-10', 'YYYY-MM-DD'), 12, 5);
+INSERT INTO Joc (id_joc, id_developer, nume_joc, pret_joc, data_lansare_joc, varsta_recomandata, rating)
+VALUES (16, 6, 'Portal 2', 20, TO_DATE('2011-04-19', 'YYYY-MM-DD'), 10, 5);
+
+-- /////////////////////////// Utilizator ///////////////////////////
+SELECT * FROM Utilizator;
+INSERT INTO Utilizator (id_utilizator, nume_utilizator, parola, email, varsta, id_tara) 
+VALUES (1, 'QuantumLeap', 'timeTravel42', 'alex.ramirez@protonmail.com', 18, 1); -- SUA
+INSERT INTO Utilizator (id_utilizator, nume_utilizator, parola, email, varsta, id_tara) 
+VALUES (2, 'GlitchWizard', 'codeMancer88', 'nina.schwartz@zoho.com', 19, 7); -- Suedia
+INSERT INTO Utilizator (id_utilizator, nume_utilizator, parola, email, varsta, id_tara) 
+VALUES (3, 'NeonRider', 'speedOfLight77', 'leon.tang@yandex.com', 21, 2); -- Japonia
+INSERT INTO Utilizator (id_utilizator, nume_utilizator, parola, email, varsta, id_tara) 
+VALUES (4, 'PixelHunter', 'sharpShooter89', 'marco.valenti@gmail.com', 12, 1); -- SUA
+INSERT INTO Utilizator (id_utilizator, nume_utilizator, parola, email, varsta, id_tara) 
+VALUES (5, 'FrostMage', 'chillFactor0', 'sarah.muller@web.de', 23, 10); -- Germania
+INSERT INTO Utilizator (id_utilizator, nume_utilizator, parola, email, varsta, id_tara) 
+VALUES (6, 'StormCaster', 'stormyWeather22', 'emily.dubois@yahoo.fr', 18, 4); -- Franta
+INSERT INTO Utilizator (id_utilizator, nume_utilizator, parola, email, varsta, id_tara) 
+VALUES (7, 'RaresAndrei07', 'raresica123', 'rares.stanescu@gmail.com', 19, 5); -- Romania
+INSERT INTO Utilizator (id_utilizator, nume_utilizator, parola, email, varsta, id_tara) 
+VALUES (8, 'RigbyJohnny', 'bunaparolaasta00', 'vlad.stefan@gmail.com', 19, 5); -- Romania
+
+-- /////////////////////////// Notificare ///////////////////////////
+SELECT * FROM Notificare;
+INSERT INTO  Notificare (id_notificare, id_utilizator, text_notificare) 
+VALUES (1, 1, 'Noutati in cont. VERDE');
+INSERT INTO  Notificare (id_notificare, id_utilizator, text_notificare) 
+VALUES (2, 1, 'Actualizare importanta. PORTOCALIU');
+INSERT INTO  Notificare (id_notificare, id_utilizator, text_notificare) 
+VALUES (3, 2, 'Alerta de securitate. ROSU');
+INSERT INTO  Notificare (id_notificare, id_utilizator, text_notificare) 
+VALUES (4, 2, 'Promotii noi. VERDE');
+INSERT INTO  Notificare (id_notificare, id_utilizator, text_notificare) 
+VALUES (5, 3, 'Feedback procesat. VERDE');
+INSERT INTO  Notificare (id_notificare, id_utilizator, text_notificare) 
+VALUES (6, 4, 'Termeni actualizati. PORTOCALIU');
+INSERT INTO  Notificare (id_notificare, id_utilizator, text_notificare) 
+VALUES (7, 5, 'Cont expira curand. PORTOCALIU');
+INSERT INTO  Notificare (id_notificare, id_utilizator, text_notificare) 
+VALUES (8, 6, 'Eligibil pentru upgrade. VERDE');
+INSERT INTO  Notificare (id_notificare, id_utilizator, text_notificare) 
+VALUES (9, 7, 'Oferta speciala expira. PORTOCALIU');
+INSERT INTO  Notificare (id_notificare, id_utilizator, text_notificare) 
+VALUES (10, 8, 'Suspiciune de frauda. ROSU');
+INSERT INTO  Notificare (id_notificare, id_utilizator, text_notificare) 
+VALUES (11, 3, 'Joc preferat actualizat. VERDE');
+INSERT INTO  Notificare (id_notificare, id_utilizator, text_notificare) 
+VALUES (12, 3, 'Reduceri de weekend. PORTOCALIU');
+INSERT INTO  Notificare (id_notificare, id_utilizator, text_notificare) 
+VALUES (13, 4, 'Alerta securitate. ROSU');
+INSERT INTO  Notificare (id_notificare, id_utilizator, text_notificare) 
+VALUES (14, 4, 'Invitatie beta test. VERDE');
+INSERT INTO  Notificare (id_notificare, id_utilizator, text_notificare) 
+VALUES (15, 5, 'Abonament expira curand. PORTOCALIU');
+INSERT INTO  Notificare (id_notificare, id_utilizator, text_notificare) 
+VALUES (16, 6, 'Cadou in inventar. VERDE');
+INSERT INTO  Notificare (id_notificare, id_utilizator, text_notificare) 
+VALUES (17, 7, 'Sondaj comunitate. VERDE');
+INSERT INTO  Notificare (id_notificare, id_utilizator, text_notificare) 
+VALUES (18, 7, 'Update joc efectuat. VERDE');
+INSERT INTO  Notificare (id_notificare, id_utilizator, text_notificare) 
+VALUES (19, 8, 'Functie noua disponibila. VERDE');
+INSERT INTO  Notificare (id_notificare, id_utilizator, text_notificare) 
+VALUES (20, 8, 'Update securitate. ROSU');
+
+-- /////////////////////////// Mesaj ///////////////////////////
+SELECT * FROM Mesaj;
+INSERT INTO Mesaj (id_mesaj, id_notificare, text_mesaj, este_citit) 
+VALUES (1, 1, 'Ai noutati in contul tau. Verifica-le acum!', 0);
+INSERT INTO Mesaj (id_mesaj, id_notificare, text_mesaj, este_citit) 
+VALUES (2, 2, 'O actualizare importanta este disponibila pentru tine.', 1);
+INSERT INTO Mesaj (id_mesaj, id_notificare, text_mesaj, este_citit) 
+VALUES (3, 3, 'Alerta de securitate! Verifica activitatea recenta.', 0);
+INSERT INTO Mesaj (id_mesaj, id_notificare, text_mesaj, este_citit) 
+VALUES (4, 4, 'Profita de promotiile noi adaugate recent.', 1);
+INSERT INTO Mesaj (id_mesaj, id_notificare, text_mesaj, este_citit) 
+VALUES (5, 5, 'Feedback-ul tau a fost procesat cu succes.', 0);
+INSERT INTO Mesaj (id_mesaj, id_notificare, text_mesaj, este_citit) 
+VALUES (6, 6, 'Termenii si conditiile au fost actualizati.', 1);
+INSERT INTO Mesaj (id_mesaj, id_notificare, text_mesaj, este_citit) 
+VALUES (7, 7, 'Atentie, contul tau va expira in curand.', 0);
+INSERT INTO Mesaj (id_mesaj, id_notificare, text_mesaj, este_citit) 
+VALUES (8, 8, 'Esti eligibil pentru un upgrade. Detalii in cont.', 1);
+INSERT INTO Mesaj (id_mesaj, id_notificare, text_mesaj, este_citit) 
+VALUES (9, 9, 'Ultima sansa sa profiti de oferta speciala.', 0);
+INSERT INTO Mesaj (id_mesaj, id_notificare, text_mesaj, este_citit) 
+VALUES (10, 10, 'Suspiciune de frauda detectata. Actioneaza imediat!', 1);
+INSERT INTO Mesaj (id_mesaj, id_notificare, text_mesaj, este_citit) 
+VALUES (11, 11, 'Jocul tau preferat a fost actualizat recent.', 0);
+INSERT INTO Mesaj (id_mesaj, id_notificare, text_mesaj, este_citit) 
+VALUES (12, 12, 'Reduceri de weekend disponibile acum.', 1);
+INSERT INTO Mesaj (id_mesaj, id_notificare, text_mesaj, este_citit) 
+VALUES (13, 13, 'Alerta de securitate majora! Verifica imediat.', 0);
+INSERT INTO Mesaj (id_mesaj, id_notificare, text_mesaj, este_citit) 
+VALUES (14, 14, 'Ai fost invitat la un beta test. Inscrie-te acum.', 1);
+INSERT INTO Mesaj (id_mesaj, id_notificare, text_mesaj, este_citit) 
+VALUES (15, 15, 'Abonamentul tau este pe cale sa expire. Reinnoieste-l.', 0);
+INSERT INTO Mesaj (id_mesaj, id_notificare, text_mesaj, este_citit) 
+VALUES (16, 16, 'Verifica inventarul tau pentru un cadou surpriza.', 1);
+INSERT INTO Mesaj (id_mesaj, id_notificare, text_mesaj, este_citit) 
+VALUES (17, 17, 'Participa la sondajul nostru si castiga puncte.', 0);
+INSERT INTO Mesaj (id_mesaj, id_notificare, text_mesaj, este_citit) 
+VALUES (18, 18, 'Update-ul jocului tau a fost efectuat cu succes.', 1);
+INSERT INTO Mesaj (id_mesaj, id_notificare, text_mesaj, este_citit) 
+VALUES (19, 19, 'O noua functie este acum disponibila in contul tau.', 1);
+INSERT INTO Mesaj (id_mesaj, id_notificare, text_mesaj, este_citit) 
+VALUES (20, 20, 'Este disponibil un update important de securitate.', 1);
+
+-- /////////////////////////// Recenzie ///////////////////////////
+SELECT * FROM Recenzie;
+INSERT INTO Recenzie (id_recenzie, id_utilizator, id_joc, text_recenzie, data_recenzie) 
+VALUES (1, 1, 1, 'Explorarea in stil viking este detaliata si captivanta. POZITIV', TO_DATE('2020-08-10', 'YYYY-MM-DD'));
+INSERT INTO Recenzie (id_recenzie, id_utilizator, id_joc, text_recenzie, data_recenzie) 
+VALUES (2, 5, 2, 'Gameplay-ul este robust, dar campania este scurta. NEGATIV', TO_DATE('2022-01-15', 'YYYY-MM-DD'));
+INSERT INTO Recenzie (id_recenzie, id_utilizator, id_joc, text_recenzie, data_recenzie) 
+VALUES (3, 8, 3, 'Viziunea futurista este impresionanta, dar plina de bug-uri. NEGATIV', TO_DATE('2020-09-10', 'YYYY-MM-DD'));
+INSERT INTO Recenzie (id_recenzie, id_utilizator, id_joc, text_recenzie, data_recenzie) 
+VALUES (4, 3, 4, 'Poveste profunda si emotionanta. POZITIV', TO_DATE('2020-12-20', 'YYYY-MM-DD'));
+INSERT INTO Recenzie (id_recenzie, id_utilizator, id_joc, text_recenzie, data_recenzie) 
+VALUES (5, 4, 5, 'Jocul redefineste genul, dar nu este pentru toata lumea. NEGATIV', TO_DATE('2019-08-08', 'YYYY-MM-DD'));
+INSERT INTO Recenzie (id_recenzie, id_utilizator, id_joc, text_recenzie, data_recenzie) 
+VALUES (6, 2, 6, 'Un peisaj deschis superb si lupte detaliate. POZITIV', TO_DATE('2020-10-17', 'YYYY-MM-DD'));
+INSERT INTO Recenzie (id_recenzie, id_utilizator, id_joc, text_recenzie, data_recenzie) 
+VALUES (7, 7, 7, 'Complex si detaliat, dar dificil pentru incepatori. NEGATIV', TO_DATE('2018-07-26', 'YYYY-MM-DD'));
+INSERT INTO Recenzie (id_recenzie, id_utilizator, id_joc, text_recenzie, data_recenzie) 
+VALUES (8, 6, 8, 'O capodopera narativa cu un ritm lent. POZITIV', TO_DATE('2018-04-26', 'YYYY-MM-DD'));
+INSERT INTO Recenzie (id_recenzie, id_utilizator, id_joc, text_recenzie, data_recenzie) 
+VALUES (9, 1, 9, 'Actiune non-stop si grafica impresionanta. POZITIV', TO_DATE('2020-03-19', 'YYYY-MM-DD'));
+INSERT INTO Recenzie (id_recenzie, id_utilizator, id_joc, text_recenzie, data_recenzie) 
+VALUES (10, 5, 10, 'Lume uriasa ce asteapta sa fie explorata. POZITIV', TO_DATE('2019-09-14', 'YYYY-MM-DD'));
+INSERT INTO Recenzie (id_recenzie, id_utilizator, id_joc, text_recenzie, data_recenzie) 
+VALUES (11, 1, 11, 'Creativitate fara limite si distractie continua. POZITIV', TO_DATE('2023-10-01', 'YYYY-MM-DD'));
+INSERT INTO Recenzie (id_recenzie, id_utilizator, id_joc, text_recenzie, data_recenzie) 
+VALUES (12, 5, 12, 'Evolutie impresionanta in simularea fotbalului, gameplay rafinat. POZITIV', TO_DATE('2030-09-29', 'YYYY-MM-DD'));
+INSERT INTO Recenzie (id_recenzie, id_utilizator, id_joc, text_recenzie, data_recenzie) 
+VALUES (13, 8, 13, 'Simulare realista a fotbalului, dar cu microtranzactii excesive. NEGATIV', TO_DATE('2022-10-01', 'YYYY-MM-DD'));
+INSERT INTO Recenzie (id_recenzie, id_utilizator, id_joc, text_recenzie, data_recenzie) 
+VALUES (14, 1, 14, 'Competitiv si captivant, un clasic al shooterelor. POZITIV', TO_DATE('2012-09-01', 'YYYY-MM-DD'));
+INSERT INTO Recenzie (id_recenzie, id_utilizator, id_joc, text_recenzie, data_recenzie) 
+VALUES (15, 8, 15, 'Distractiv si strategic, cu o comunitate vibranta. POZITIV', TO_DATE('2007-09-30', 'YYYY-MM-DD'));
+INSERT INTO Recenzie (id_recenzie, id_utilizator, id_joc, text_recenzie, data_recenzie) 
+VALUES (16, 3, 16, 'Puzzle-uri ingenioase si un umor deosebit. POZITIV', TO_DATE('2011-05-19', 'YYYY-MM-DD'));
+
+-- /////////////////////////// Colectie ///////////////////////////
+SELECT * FROM Colectie;
+INSERT INTO Colectie (id_colectie, id_utilizator, nume_colectie) 
+VALUES (1, 1, 'Calatorii in Timp');
+INSERT INTO Colectie (id_colectie, id_utilizator, nume_colectie) 
+VALUES (2, 1, 'Exploarea spatiului');
+INSERT INTO Colectie (id_colectie, id_utilizator, nume_colectie) 
+VALUES (3, 2, 'Cosmar');
+INSERT INTO Colectie (id_colectie, id_utilizator, nume_colectie) 
+VALUES (4, 2, 'Lumi Deschise');
+INSERT INTO Colectie (id_colectie, id_utilizator, nume_colectie) 
+VALUES (5, 3, 'Actiune Intensa');
+INSERT INTO Colectie (id_colectie, id_utilizator, nume_colectie) 
+VALUES (6, 3, 'Cupe Mondiale');
+INSERT INTO Colectie (id_colectie, id_utilizator, nume_colectie) 
+VALUES (7, 4, 'RPG-uri Epice');
+INSERT INTO Colectie (id_colectie, id_utilizator, nume_colectie) 
+VALUES (8, 4, 'Shootere Tactice');
+INSERT INTO Colectie (id_colectie, id_utilizator, nume_colectie) 
+VALUES (9, 5, 'Paranormal');
+INSERT INTO Colectie (id_colectie, id_utilizator, nume_colectie) 
+VALUES (10, 5, 'Adrenalina la Maxim');
+INSERT INTO Colectie (id_colectie, id_utilizator, nume_colectie) 
+VALUES (11, 7, 'Povesti Epice');
+INSERT INTO Colectie (id_colectie, id_utilizator, nume_colectie) 
+VALUES (12, 7, 'Strategie si Tactici');
+INSERT INTO Colectie (id_colectie, id_utilizator, nume_colectie) 
+VALUES (13, 8, 'Sci-Fi si Fantezie');
+INSERT INTO Colectie (id_colectie, id_utilizator, nume_colectie) 
+VALUES (14, 8, 'Arena Sportiva');
+
+-- /////////////////////////// Colectie_Joc ///////////////////////////
+SELECT * FROM Colectie_Joc;
+INSERT INTO Colectie_Joc (id_colectie, id_joc) VALUES (1, 1);
+INSERT INTO Colectie_Joc (id_colectie, id_joc) VALUES (2, 2);
+INSERT INTO Colectie_Joc (id_colectie, id_joc) VALUES (3, 9);
+INSERT INTO Colectie_Joc (id_colectie, id_joc) VALUES (4, 8);
+INSERT INTO Colectie_Joc (id_colectie, id_joc) VALUES (5, 4);
+INSERT INTO Colectie_Joc (id_colectie, id_joc) VALUES (6, 13);
+INSERT INTO Colectie_Joc (id_colectie, id_joc) VALUES (7, 3);
+INSERT INTO Colectie_Joc (id_colectie, id_joc) VALUES (8, 14);
+INSERT INTO Colectie_Joc (id_colectie, id_joc) VALUES (9, 16);
+INSERT INTO Colectie_Joc (id_colectie, id_joc) VALUES (10, 5);
+INSERT INTO Colectie_Joc (id_colectie, id_joc) VALUES (11, 11);
+INSERT INTO Colectie_Joc (id_colectie, id_joc) VALUES (12, 11);
+INSERT INTO Colectie_Joc (id_colectie, id_joc) VALUES (13, 4);
+INSERT INTO Colectie_Joc (id_colectie, id_joc) VALUES (14, 2);
+INSERT INTO Colectie_Joc (id_colectie, id_joc) VALUES (1, 3);
+INSERT INTO Colectie_Joc (id_colectie, id_joc) VALUES (14, 13);
+INSERT INTO Colectie_Joc (id_colectie, id_joc) VALUES (4, 6);
+INSERT INTO Colectie_Joc (id_colectie, id_joc) VALUES (7, 7);
+INSERT INTO Colectie_Joc (id_colectie, id_joc) VALUES (10, 9);
+INSERT INTO Colectie_Joc (id_colectie, id_joc) VALUES (5, 10);
+INSERT INTO Colectie_Joc (id_colectie, id_joc) VALUES (8, 15);
+INSERT INTO Colectie_Joc (id_colectie, id_joc) VALUES (12, 16);
+INSERT INTO Colectie_Joc (id_colectie, id_joc) VALUES (10, 14); 
+INSERT INTO Colectie_Joc (id_colectie, id_joc) VALUES (14, 12);
+
+-- /////////////////////////// Inventar ///////////////////////////
+SELECT * FROM Inventar;
+INSERT INTO Inventar (id_inventar, id_utilizator, capacitate) VALUES (1, 1, 10);
+INSERT INTO Inventar (id_inventar, id_utilizator, capacitate) VALUES (2, 2, 3);
+INSERT INTO Inventar (id_inventar, id_utilizator, capacitate) VALUES (3, 3, 5);
+INSERT INTO Inventar (id_inventar, id_utilizator, capacitate) VALUES (4, 4, 6);
+INSERT INTO Inventar (id_inventar, id_utilizator, capacitate) VALUES (5, 5, 2);
+INSERT INTO Inventar (id_inventar, id_utilizator, capacitate) VALUES (6, 6, 3);
+INSERT INTO Inventar (id_inventar, id_utilizator, capacitate) VALUES (7, 7, 4);
+INSERT INTO Inventar (id_inventar, id_utilizator, capacitate) VALUES (8, 8, 3);
+
+-- /////////////////////////// Item ///////////////////////////
+SELECT * FROM Item;
+INSERT INTO Item (id_item, nume_item, pret_item, raritate_item, id_joc) 
+VALUES (1, 'AK-47 | Redline', 25.00, 'CLASSIFIED', 14);
+INSERT INTO Item (id_item, nume_item, pret_item, raritate_item, id_joc) 
+VALUES (2, 'AWP | Dragon Lore', 1500.00, 'COVERT', 14);
+INSERT INTO Item (id_item, nume_item, pret_item, raritate_item, id_joc) 
+VALUES (3, 'Mann Co. Supply Crate Key', 2.50, 'COMMON', 15);
+INSERT INTO Item (id_item, nume_item, pret_item, raritate_item, id_joc)
+VALUES (4, 'Unusual Hat', 200.00, 'UNUSUAL', 15);
+INSERT INTO Item (id_item, nume_item, pret_item, raritate_item, id_joc)
+VALUES (5, 'Glock-18 | Fade', 300.00, 'COVERT', 14);
+INSERT INTO Item (id_item, nume_item, pret_item, raritate_item, id_joc)
+VALUES (6, 'Strange Rocket Launcher', 50.00, 'STRANGE', 15);
+INSERT INTO Item (id_item, nume_item, pret_item, raritate_item, id_joc) 
+VALUES (7, 'M4A4 | Howl', 1800.00, 'CONTRABAND', 14);
+INSERT INTO Item (id_item, nume_item, pret_item, raritate_item, id_joc) 
+VALUES (8, 'Strange Professional Killstreak Scattergun', 100.00, 'STRANGE', 15);
+INSERT INTO Item (id_item, nume_item, pret_item, raritate_item, id_joc) 
+VALUES (9, 'Desert Eagle | Blaze', 600.00, 'COVERT', 14);
+INSERT INTO Item (id_item, nume_item, pret_item, raritate_item, id_joc) 
+VALUES (10, 'Unusual Taunt', 150.00, 'UNUSUAL', 15);
+INSERT INTO Item (id_item, nume_item, pret_item, raritate_item, id_joc) 
+VALUES (11, 'Karambit | Doppler', 1200.00, 'COVERT', 14);
+INSERT INTO Item (id_item, nume_item, pret_item, raritate_item, id_joc)
+VALUES (12, 'Australium Wrench', 100.00, 'AUSTRALIUM', 15);
+INSERT INTO Item (id_item, nume_item, pret_item, raritate_item, id_joc)
+VALUES (13, 'P90 | Asiimov', 50.00, 'CLASSIFIED', 14);
+INSERT INTO Item (id_item, nume_item, pret_item, raritate_item, id_joc)
+VALUES (14, 'Strange Professional Killstreak Minigun', 200.00, 'STRANGE', 15);
+INSERT INTO Item (id_item, nume_item, pret_item, raritate_item, id_joc)
+VALUES (15, 'USP-S | Kill Confirmed', 100.00, 'COVERT', 14);
+INSERT INTO Item (id_item, nume_item, pret_item, raritate_item, id_joc)
+VALUES (16, 'Unusual Rocket Launcher', 300.00, 'UNUSUAL', 15);
+INSERT INTO Item (id_item, nume_item, pret_item, raritate_item, id_joc) 
+VALUES (17, 'AK-47 | Elite Build', 1.50, 'MIL-SPEC', 14);
+INSERT INTO Item (id_item, nume_item, pret_item, raritate_item, id_joc)
+VALUES (18, 'AWP | Worm God', 2.00, 'MIL-SPEC', 14);
+INSERT INTO Item (id_item, nume_item, pret_item, raritate_item, id_joc) 
+VALUES (19, 'FAMAS | Pulse', 0.75, 'RESTRICTED', 14);
+INSERT INTO Item (id_item, nume_item, pret_item, raritate_item, id_joc) 
+VALUES (20, 'Galil AR | Chatterbox', 3.00, 'RESTRICTED', 14);
+INSERT INTO Item (id_item, nume_item, pret_item, raritate_item, id_joc) 
+VALUES (21, 'UMP-45 | Primal Saber', 1.20, 'RESTRICTED', 14);
+INSERT INTO Item (id_item, nume_item, pret_item, raritate_item, id_joc) 
+VALUES (22, 'CZ75-Auto | The Fuschia Is Now', 0.90, 'RESTRICTED', 14);
+INSERT INTO Item (id_item, nume_item, pret_item, raritate_item, id_joc) 
+VALUES (23, 'MP7 | Bloodsport', 1.50, 'RESTRICTED', 14);
+INSERT INTO Item (id_item, nume_item, pret_item, raritate_item, id_joc)
+VALUES (24, 'SG 553 | Pulse', 0.70, 'MIL-SPEC', 14);
+INSERT INTO Item (id_item, nume_item, pret_item, raritate_item, id_joc)
+VALUES (25, 'P250 | Supernova', 0.65, 'MIL-SPEC', 14);
+INSERT INTO Item (id_item, nume_item, raritate_item, id_joc) 
+VALUES (26, 'Useless Item', 'MIL-SPEC', 14);
+
+-- /////////////////////////// Inventar_Item ///////////////////////////
+SELECT * FROM Inventar_Item;
+INSERT INTO Inventar_Item (id_item, id_inventar) VALUES (5, 1);
+INSERT INTO Inventar_Item (id_item, id_inventar) VALUES (12, 1);
+INSERT INTO Inventar_Item (id_item, id_inventar) VALUES (7, 1);
+INSERT INTO Inventar_Item (id_item, id_inventar) VALUES (19, 1);
+INSERT INTO Inventar_Item (id_item, id_inventar) VALUES (3, 1);
+INSERT INTO Inventar_Item (id_item, id_inventar) VALUES (26, 1);
+INSERT INTO Inventar_Item (id_item, id_inventar) VALUES (9, 2);
+INSERT INTO Inventar_Item (id_item, id_inventar) VALUES (15, 2);
+INSERT INTO Inventar_Item (id_item, id_inventar) VALUES (22, 2);
+INSERT INTO Inventar_Item (id_item, id_inventar) VALUES (1, 2);  -- Ex
+INSERT INTO Inventar_Item (id_item, id_inventar) VALUES (14, 3);
+INSERT INTO Inventar_Item (id_item, id_inventar) VALUES (6, 3);
+INSERT INTO Inventar_Item (id_item, id_inventar) VALUES (17, 3);
+INSERT INTO Inventar_Item (id_item, id_inventar) VALUES (20, 4);
+INSERT INTO Inventar_Item (id_item, id_inventar) VALUES (21, 4);
+INSERT INTO Inventar_Item (id_item, id_inventar) VALUES (24, 4);
+INSERT INTO Inventar_Item (id_item, id_inventar) VALUES (2, 5);
+INSERT INTO Inventar_Item (id_item, id_inventar) VALUES (11, 5);
+INSERT INTO Inventar_Item (id_item, id_inventar) VALUES (18, 5);
+INSERT INTO Inventar_Item (id_item, id_inventar) VALUES (25, 5);  -- Ex
+INSERT INTO Inventar_Item (id_item, id_inventar) VALUES (4, 6);
+INSERT INTO Inventar_Item (id_item, id_inventar) VALUES (8, 6);
+INSERT INTO Inventar_Item (id_item, id_inventar) VALUES (10, 7);
+INSERT INTO Inventar_Item (id_item, id_inventar) VALUES (13, 7);
+INSERT INTO Inventar_Item (id_item, id_inventar) VALUES (16, 7);
+INSERT INTO Inventar_Item (id_item, id_inventar) VALUES (23, 8);
+
+-- /////////////////////////// Tranzactie ///////////////////////////
+SELECT * FROM Tranzactie;
+INSERT INTO Tranzactie (id_tranzactie, id_utilizator, metoda_tranzactie, suma_tranzactie, data_tranzactie) 
+VALUES (1, 1, 'Card de credit', 100, TO_DATE('2023-09-15', 'YYYY-MM-DD'));
+INSERT INTO Tranzactie (id_tranzactie, id_utilizator, metoda_tranzactie, suma_tranzactie, data_tranzactie) 
+VALUES (2, 1, 'PayPal', 50, TO_DATE('2023-08-21', 'YYYY-MM-DD'));
+INSERT INTO Tranzactie (id_tranzactie, id_utilizator, metoda_tranzactie, suma_tranzactie, data_tranzactie) 
+VALUES (3, 2, 'Card de debit', 25, TO_DATE('2023-07-30', 'YYYY-MM-DD'));
+INSERT INTO Tranzactie (id_tranzactie, id_utilizator, metoda_tranzactie, suma_tranzactie, data_tranzactie) 
+VALUES (4, 2, 'Transfer bancar', 200, TO_DATE('2023-09-05', 'YYYY-MM-DD'));
+INSERT INTO Tranzactie (id_tranzactie, id_utilizator, metoda_tranzactie, suma_tranzactie, data_tranzactie) 
+VALUES (5, 3, 'Card de credit', 45, TO_DATE('2023-10-11', 'YYYY-MM-DD'));
+INSERT INTO Tranzactie (id_tranzactie, id_utilizator, metoda_tranzactie, suma_tranzactie, data_tranzactie) 
+VALUES (6, 4, 'Card de debit', 150, TO_DATE('2023-08-25', 'YYYY-MM-DD'));
+INSERT INTO Tranzactie (id_tranzactie, id_utilizator, metoda_tranzactie, suma_tranzactie, data_tranzactie) 
+VALUES (7, 5, 'PayPal', 30, TO_DATE('2023-09-20', 'YYYY-MM-DD'));
+INSERT INTO Tranzactie (id_tranzactie, id_utilizator, metoda_tranzactie, suma_tranzactie, data_tranzactie) 
+VALUES (8, 6, 'Transfer bancar', 75, TO_DATE('2023-10-02', 'YYYY-MM-DD'));
+INSERT INTO Tranzactie (id_tranzactie, id_utilizator, metoda_tranzactie, suma_tranzactie, data_tranzactie) 
+VALUES (9, 1, 'Card de credit', 120, TO_DATE('2023-11-01', 'YYYY-MM-DD'));
+INSERT INTO Tranzactie (id_tranzactie, id_utilizator, metoda_tranzactie, suma_tranzactie, data_tranzactie) 
+VALUES (10, 1, 'PayPal', 60, TO_DATE('2023-11-15', 'YYYY-MM-DD'));
+INSERT INTO Tranzactie (id_tranzactie, id_utilizator, metoda_tranzactie, suma_tranzactie, data_tranzactie) 
+VALUES (11, 2, 'Card de debit', 35, TO_DATE('2023-12-05', 'YYYY-MM-DD'));
+INSERT INTO Tranzactie (id_tranzactie, id_utilizator, metoda_tranzactie, suma_tranzactie, data_tranzactie) 
+VALUES (12, 2, 'Transfer bancar', 210, TO_DATE('2023-12-20', 'YYYY-MM-DD'));
+INSERT INTO Tranzactie (id_tranzactie, id_utilizator, metoda_tranzactie, suma_tranzactie, data_tranzactie) 
+VALUES (13, 3, 'Card de credit', 50, TO_DATE('2023-11-10', 'YYYY-MM-DD'));
+INSERT INTO Tranzactie (id_tranzactie, id_utilizator, metoda_tranzactie, suma_tranzactie, data_tranzactie) 
+VALUES (14, 4, 'Card de debit', 160, TO_DATE('2023-11-25', 'YYYY-MM-DD'));
+INSERT INTO Tranzactie (id_tranzactie, id_utilizator, metoda_tranzactie, suma_tranzactie, data_tranzactie) 
+VALUES (15, 5, 'PayPal', 40, TO_DATE('2023-12-01', 'YYYY-MM-DD'));
+INSERT INTO Tranzactie (id_tranzactie, id_utilizator, metoda_tranzactie, suma_tranzactie, data_tranzactie) 
+VALUES (16, 6, 'Transfer bancar', 80, TO_DATE('2023-11-20', 'YYYY-MM-DD'));
+INSERT INTO Tranzactie (id_tranzactie, id_utilizator, metoda_tranzactie, suma_tranzactie, data_tranzactie) 
+VALUES (17, 7, 'Card de credit', 95, TO_DATE('2023-12-15', 'YYYY-MM-DD'));
+INSERT INTO Tranzactie (id_tranzactie, id_utilizator, metoda_tranzactie, suma_tranzactie, data_tranzactie) 
+VALUES (18, 8, 'PayPal', 55, TO_DATE('2023-11-30', 'YYYY-MM-DD'));
+
+-----------------------------------------------------------------------------------------------------------------------------
+
+SET SERVEROUTPUT ON;
+-- ////////// EX6 //////////////
+-- sa se afiseze utilizatorii cu nr de notificari peste media numarului de notificari
+CREATE OR REPLACE PROCEDURE notif_peste_medie IS
+    -- stocam numarul de notificari pentru fiecare utilizator
+    TYPE tablou_indexat IS
+        TABLE OF NUMBER INDEX BY PLS_INTEGER;
+    numar_notificari        tablou_indexat;
+
+    -- stocam notificarile
+    TYPE tablou_imbricat IS
+        TABLE OF VARCHAR2(256);
+    notificari              tablou_imbricat := tablou_imbricat();
+
+    -- stocam utilizatorii cu nr de notificari peste medie
+    TYPE vector_utilizatori IS
+        VARRAY(100) OF VARCHAR2(50);
+    utilizatori_peste_medie vector_utilizatori := vector_utilizatori();
+    v_numar_utilizatori     PLS_INTEGER := 0;
+    v_total_notificari      NUMBER := 0;
+    v_media                 NUMBER;
+BEGIN
+    -- numarul de notificari pentru fiecare utilizator
+    FOR rec IN (
+        SELECT
+            id_utilizator,
+            COUNT(*) AS numar_notificari
+        FROM
+            notificare
+        GROUP BY
+            id_utilizator
+    ) LOOP
+        v_numar_utilizatori := v_numar_utilizatori + 1;
+        numar_notificari(v_numar_utilizatori) := rec.numar_notificari;
+        v_total_notificari := v_total_notificari + rec.numar_notificari;
+    END LOOP;
+
+    -- media notificarilor
+    IF v_numar_utilizatori > 0 THEN
+        v_media := v_total_notificari / v_numar_utilizatori;
+    ELSE
+        v_media := 0; -- Evitam diviziunea cu zero
+    END IF;
+
+    -- adaugam toate notificarile in tabloul imbricat
+    FOR rec IN (
+        SELECT
+            text_notificare
+        FROM
+            notificare
+    ) LOOP
+        notificari.extend;
+        notificari(notificari.last) := rec.text_notificare;
+    END LOOP;
+
+    dbms_output.put_line('Nr de notificari in medie: ' || v_media);
+
+    -- stocam utilizatorii cu nr de notificari peste medie
+    dbms_output.put_line('Utilizatorii cu numar peste medie de notificari:');
+    FOR rec IN (
+        SELECT
+            u.nume_utilizator,
+            COUNT(n.id_notificare) AS numar_notificari
+        FROM
+                 utilizator u
+            JOIN notificare n ON u.id_utilizator = n.id_utilizator
+        GROUP BY
+            u.nume_utilizator
+        HAVING
+            COUNT(n.id_notificare) > v_media
+    ) LOOP
+        utilizatori_peste_medie.extend;
+        utilizatori_peste_medie(utilizatori_peste_medie.last) := rec.nume_utilizator;
+        dbms_output.put_line(rec.nume_utilizator
+                             || ' - '
+                             || rec.numar_notificari);
+    END LOOP;
+
+EXCEPTION
+    WHEN OTHERS THEN
+        dbms_output.put_line('A aparut o eroare: ' || sqlerrm);
+END notif_peste_medie;
+/
+
+BEGIN
+    notif_peste_medie;
+END;
+/
+
+-- ////////// EX7 //////////////
+
+-- Afiseaza utilizatorii si numarul de recenzii scrise de fiecare, 
+--specificand daca recenzia este pozitiva sau negativa, 
+--in functie de continutul textului recenziei.
+
+CREATE OR REPLACE PROCEDURE gestionare_recenzii IS
+    -- pentru numele utilizatorului si numarul de recenzii
+    CURSOR c_utilizatori IS
+    SELECT
+        u.id_utilizator,
+        u.nume_utilizator,
+        COUNT(r.id_recenzie) AS numar_recenzii
+    FROM
+        utilizator u
+        LEFT JOIN recenzie   r ON u.id_utilizator = r.id_utilizator
+    GROUP BY
+        u.id_utilizator,
+        u.nume_utilizator;
+
+    -- pentru detaliile despre recenzii
+    CURSOR c_recenzii (
+        p_id_utilizator NUMBER
+    ) IS
+    SELECT
+        j.nume_joc,
+        r.text_recenzie
+    FROM
+             recenzie r
+        JOIN joc j ON r.id_joc = j.id_joc
+    WHERE
+        r.id_utilizator = p_id_utilizator;
+
+    v_id_utilizator   utilizator.id_utilizator%TYPE;
+    v_nume_utilizator utilizator.nume_utilizator%TYPE;
+    v_numar_recenzii  NUMBER;
+    v_nume_joc        joc.nume_joc%TYPE;
+    v_text_recenzie   recenzie.text_recenzie%TYPE;
+BEGIN
+    OPEN c_utilizatori;
+    LOOP
+        FETCH c_utilizatori INTO
+            v_id_utilizator,
+            v_nume_utilizator,
+            v_numar_recenzii;
+        EXIT WHEN c_utilizatori%notfound;
+        IF v_numar_recenzii = 1 THEN
+            dbms_output.put_line('Utilizatorul '
+                                 || v_nume_utilizator
+                                 || ' a scris o recenzie.');
+        ELSE
+            dbms_output.put_line('Utilizatorul '
+                                 || v_nume_utilizator
+                                 || ' a scris '
+                                 || v_numar_recenzii
+                                 || ' recenzii.');
+        END IF;
+
+        OPEN c_recenzii(v_id_utilizator);
+        LOOP
+            FETCH c_recenzii INTO
+                v_nume_joc,
+                v_text_recenzie;
+            EXIT WHEN c_recenzii%notfound;
+
+            -- verificam textul recenziei
+            IF instr(v_text_recenzie, 'POZITIV') > 0 THEN
+                dbms_output.put_line('Joc: '
+                                     || v_nume_joc
+                                     || ', Recenzie: Pozitiva');
+            ELSIF instr(v_text_recenzie, 'NEGATIV') > 0 THEN
+                dbms_output.put_line('Joc: '
+                                     || v_nume_joc
+                                     || ', Recenzie: Negativa');
+            ELSE
+                dbms_output.put_line('Joc: '
+                                     || v_nume_joc
+                                     || ', Recenzie: '
+                                     || v_text_recenzie);
+            END IF;
+
+        END LOOP;
+
+        CLOSE c_recenzii;
+    END LOOP;
+
+    CLOSE c_utilizatori;
+END;
+/
+
+BEGIN
+    gestionare_recenzii;
+END;
+/
+
+-- ////////// EX8 //////////////
+
+--cream un utilizator fara tranzactii
+INSERT INTO utilizator (
+    id_utilizator,
+    nume_utilizator,
+    parola,
+    email,
+    varsta,
+    id_tara
+) VALUES (
+    9,
+    'MonsterSlayer',
+    'deathh123',
+    'ramon.anto@gmail.com',
+    21,
+    2
+);
+
+-- sa se afiseze pentru un utilizator dat daca suma tranzactiilor sale 
+-- este mai mare decat media tranzactiilor efectuate de toti utilizatorii.
+-- utilizatorul trebuie sa aiba domiciliu intr-o tara cu salariul mediu peste
+-- 20000, iar acesta sa nu aiba mai mult de 3 tranzactii.
+CREATE OR REPLACE FUNCTION verifica_tranzactii_utilizator (
+    p_id_utilizator NUMBER
+) RETURN VARCHAR2 IS
+    v_suma_tranzactii   NUMBER;
+    v_media_tranzactii  NUMBER;
+    v_salariu_mediu     NUMBER;
+    v_numar_tranzactii  NUMBER;
+    v_exista_utilizator NUMBER;
+BEGIN
+    SELECT
+        COUNT(*)
+    INTO v_exista_utilizator
+    FROM
+        utilizator
+    WHERE
+        id_utilizator = p_id_utilizator;
+
+    IF v_exista_utilizator = 0 THEN
+        raise_application_error(-20001, 'Utilizatorul nu exista.');
+    END IF;
+
+    -- verificam numarul de tranzactii ale utilizatorului
+    SELECT
+        COUNT(*)
+    INTO v_numar_tranzactii
+    FROM
+        tranzactie
+    WHERE
+        id_utilizator = p_id_utilizator;
+
+    IF v_numar_tranzactii = 0 THEN
+        RAISE no_data_found; -- utilizatorul nu are tranzactii
+    ELSIF v_numar_tranzactii > 3 THEN
+        RAISE too_many_rows; -- are mai mult de 3 tranzactii
+    END IF;
+
+    -- suma tranzactiilor utilizatorului
+    SELECT
+        SUM(suma_tranzactie)
+    INTO v_suma_tranzactii
+    FROM
+        tranzactie
+    WHERE
+        id_utilizator = p_id_utilizator;
+
+    -- media tranzactiilor tuturor utilizatorilor
+    SELECT
+        AVG(suma_tranzactie)
+    INTO v_media_tranzactii
+    FROM
+        tranzactie;
+
+    -- salariul mediu din tara utilizatorului
+    SELECT
+        t.salariu_mediu
+    INTO v_salariu_mediu
+    FROM
+             utilizator u
+        JOIN tara t ON u.id_tara = t.id_tara
+    WHERE
+        u.id_utilizator = p_id_utilizator;
+
+    IF v_salariu_mediu <= 20000 THEN
+        raise_application_error(-20002, 'Salariul mediu din tara utilizatorului este sub 20000.');
+    END IF;
+    IF v_suma_tranzactii > v_media_tranzactii THEN
+        RETURN 'Suma tranzactiilor utilizatorului este peste media tuturor tranzactiilor ('
+               || v_suma_tranzactii
+               || ' > '
+               || round(v_media_tranzactii, 2)
+               || ').';
+    ELSE
+        RETURN 'Suma tranzactiilor utilizatorului este sub media tuturor tranzactiilor ('
+               || v_suma_tranzactii
+               || ' < '
+               || round(v_media_tranzactii, 2)
+               || ').';
+    END IF;
+
+EXCEPTION
+    WHEN no_data_found THEN
+        RETURN 'Utilizatorul nu are tranzactii.';
+    WHEN too_many_rows THEN
+        RETURN 'Utilizatorul are mai mult de 3 tranzactii.';
+    WHEN OTHERS THEN
+        RETURN 'A aparut o eroare: ' || sqlerrm;
+END;
+/
+
+BEGIN
+    dbms_output.put_line(verifica_tranzactii_utilizator(19)); -- utilizatorul nu exista
+END;
+/
+
+BEGIN
+    dbms_output.put_line(verifica_tranzactii_utilizator(2)); -- utilizatorul are mai mult de 3 tranzactii
+END;
+/
+
+BEGIN
+    dbms_output.put_line(verifica_tranzactii_utilizator(9)); -- utilizatorul nu are tranzactii
+END;
+/
+
+BEGIN
+    dbms_output.put_line(verifica_tranzactii_utilizator(8)); -- tara cu salarii mici
+END;
+/
+
+BEGIN
+    dbms_output.put_line(verifica_tranzactii_utilizator(3)); -- peste medie
+END;
+/
+
+BEGIN
+    dbms_output.put_line(verifica_tranzactii_utilizator(5)); -- sub medie
+END;
+/
+
+-- ////////// EX9 //////////////
+
+-- pentru utilizatorul cu id 9 cream un inventar cu capacitate mare
+-- (pe acesta il vom folosi pentru testarea procedurii)
+INSERT INTO inventar (
+    id_inventar,
+    id_utilizator,
+    capacitate
+) VALUES (
+    9,
+    9,
+    99
+);
+
+-- cream un utilizator cu o varsta mai mica
+-- decat varsta recomandata de majoritatea jocurilor
+INSERT INTO utilizator (
+    id_utilizator,
+    nume_utilizator,
+    parola,
+    email,
+    varsta,
+    id_tara
+) VALUES (
+    10,
+    'CookieMunchy',
+    'milkandcOOkie',
+    'donald.duck@yahoo.com',
+    8,
+    3
+);
+-- cream inventarul utilizatorului nou adaugat
+INSERT INTO inventar (
+    id_inventar,
+    id_utilizator,
+    capacitate
+) VALUES (
+    10,
+    10,
+    20
+);
+
+-- scrie o procedura care permite adaugarea unui item 
+-- in inventarul unui utilizator (id-uri date ca parametrii)
+-- 1. verifica daca utilizatorul si itemul exista
+-- 2. verifica capacitatea inventarului utilizatorului si daca
+-- este posibila adaugarea unui item
+-- 3. verifica varsta utilizatorului si compara cu varsta jocului
+-- din care face parte itemul
+
+CREATE OR REPLACE PROCEDURE adauga_item_in_inventar (
+    p_id_utilizator NUMBER,
+    p_id_item       NUMBER
+) IS
+
+    v_capacitate         NUMBER;
+    v_numar_iteme        NUMBER;
+    v_exista_item        NUMBER;
+    v_varsta_utilizator  NUMBER;
+    v_varsta_recomandata NUMBER;
+    e_capacitate_depasita EXCEPTION;
+    e_item_inexistent EXCEPTION;
+    e_varsta_recomandata EXCEPTION;
+    e_utilizator_inexistent EXCEPTION;
+BEGIN
+    -- utilizatorul exista
+    SELECT
+        COUNT(*)
+    INTO v_exista_item
+    FROM
+        utilizator
+    WHERE
+        id_utilizator = p_id_utilizator;
+
+    IF v_exista_item = 0 THEN
+        RAISE e_utilizator_inexistent;
+    END IF;
+
+    -- itemul exista
+    SELECT
+        COUNT(*)
+    INTO v_exista_item
+    FROM
+        item
+    WHERE
+        id_item = p_id_item;
+
+    IF v_exista_item = 0 THEN
+        RAISE e_item_inexistent;
+    END IF;
+
+    -- capacitatea inventarului utilizatorului
+    SELECT
+        capacitate
+    INTO v_capacitate
+    FROM
+        inventar
+    WHERE
+        id_utilizator = p_id_utilizator;
+
+    -- verificam numarul de iteme din inventar
+    SELECT
+        COUNT(*)
+    INTO v_numar_iteme
+    FROM
+        inventar_item
+    WHERE
+        id_inventar = (
+            SELECT
+                id_inventar
+            FROM
+                inventar
+            WHERE
+                id_utilizator = p_id_utilizator
+        );
+
+    IF v_numar_iteme >= v_capacitate THEN
+        RAISE e_capacitate_depasita;
+    END IF;
+
+    -- varsta recomandata a jocului asociat itemului
+    SELECT
+        j.varsta_recomandata
+    INTO v_varsta_recomandata
+    FROM
+             item i
+        JOIN joc j ON i.id_joc = j.id_joc
+    WHERE
+        i.id_item = p_id_item;
+
+    SELECT
+        varsta
+    INTO v_varsta_utilizator
+    FROM
+        utilizator
+    WHERE
+        id_utilizator = p_id_utilizator;
+
+    IF v_varsta_recomandata > v_varsta_utilizator THEN
+        RAISE e_varsta_recomandata;
+    END IF;
+
+    -- adaugam itemul in inventar
+    INSERT INTO inventar_item (
+        id_item,
+        id_inventar
+    ) VALUES (
+        p_id_item,
+        (
+            SELECT
+                id_inventar
+            FROM
+                inventar
+            WHERE
+                id_utilizator = p_id_utilizator
+        )
+    );
+
+    dbms_output.put_line('Itemul a fost adaugat cu succes in inventar.');
+EXCEPTION
+    WHEN e_capacitate_depasita THEN
+        dbms_output.put_line('Capacitatea inventarului a fost depasita.');
+    WHEN e_item_inexistent THEN
+        dbms_output.put_line('Itemul nu exista.');
+    WHEN e_varsta_recomandata THEN
+        dbms_output.put_line('Itemul nu poate fi adaugat (varsta utilizatorului prea mica).');
+    WHEN e_utilizator_inexistent THEN
+        dbms_output.put_line('Utilizatorul nu exista.');
+    WHEN OTHERS THEN
+        dbms_output.put_line('A aparut o eroare: ' || sqlerrm);
+END;
+/
+
+BEGIN
+    adauga_item_in_inventar(9, 7); -- utilizator existent, item existent, capacitate suficienta
+END;
+/
+
+BEGIN
+    adauga_item_in_inventar(99, 2); -- utilizatorul nu exista
+END;
+/
+
+BEGIN
+    adauga_item_in_inventar(9, 51); -- item-ul nu exista
+END;
+/
+
+BEGIN
+    adauga_item_in_inventar(2, 3); -- capacitate depasita
+END;
+/
+
+BEGIN
+    adauga_item_in_inventar(10, 1); -- varsta prea mica (utilizator de 8 ani, joc de 16 ani)
+END;
+/
+
+-- //////// EX10 ///////
+-- cream o tabela audit care va stoca toate operatiile LMD
+CREATE TABLE log_inventare (
+    id_log     NUMBER
+        GENERATED BY DEFAULT AS IDENTITY
+    PRIMARY KEY,
+    actiune    VARCHAR2(10),
+    data_modif TIMESTAMP DEFAULT current_timestamp
+);
+
+-- scrieti un trigger care se declanseaza la fiecare adaugare de item in inventar.
+CREATE OR REPLACE TRIGGER trg_lmd_comanda AFTER
+    INSERT OR UPDATE OR DELETE ON inventar_item
+DECLARE
+    actiune VARCHAR2(20);
+BEGIN
+    IF inserting THEN
+        actiune := 'insert';
+        dbms_output.put_line('Un item a fost adaugat in inventar.');
+    ELSIF updating THEN
+        actiune := 'update';
+        dbms_output.put_line('Un item din inventar a fost modificat.');
+    ELSIF deleting THEN
+        actiune := 'delete';
+        dbms_output.put_line('Un item a fost sters din inventar.');
+    END IF;
+
+    -- ne folosim de log pentru a inregistra actiunea
+    INSERT INTO log_inventare (
+        actiune,
+        data_modif
+    ) VALUES (
+        actiune,
+        systimestamp
+    );
+
+END;
+/
+
+--inserare
+INSERT INTO inventar_item (
+    id_item,
+    id_inventar
+) VALUES (
+    17,
+    9
+);
+
+--update
+UPDATE inventar_item
+SET
+    id_item = 18
+WHERE
+        id_item = 17
+    AND id_inventar = 9;
+
+--delete
+DELETE FROM inventar_item
+WHERE
+        id_item = 18
+    AND id_inventar = 9;
+
+SELECT
+    *
+FROM
+    log_inventare;
+
+ALTER TRIGGER trg_lmd_comanda DISABLE;
+
+-- //////// EX11 ////////
+
+-- scrieti un trigger care se declanseaza la inserarea in 
+-- tabelul Developer si care verifica conditiile:
+-- 1. studioul sa nu existe deja
+-- 2. studioul sa nu fi fost lansat in ultimii 4 ani
+-- 3. locatia studioului sa fie valida
+
+
+CREATE OR REPLACE TRIGGER trg_verifica_developer BEFORE
+    INSERT OR UPDATE ON developer
+    FOR EACH ROW
+DECLARE
+    v_count_dev     NUMBER;
+    v_count_locatie NUMBER;
+BEGIN
+    -- verif daca studioul deja exista
+    SELECT
+        COUNT(*)
+    INTO v_count_dev
+    FROM
+        developer
+    WHERE
+        nume_developer = :new.nume_developer;
+
+    IF v_count_dev > 0 THEN
+        raise_application_error(-20001, 'Studio-ul exista deja in tabela.');
+    END IF;
+
+    -- cel putin 4 ani
+    IF months_between(sysdate, :new.data_lansare_studio) < 48 THEN
+        raise_application_error(-20002, 'Studio-ul trebuie sa fie lansat de cel putin 4 ani.');
+    END IF;
+
+    -- locatie valida
+    SELECT
+        COUNT(*)
+    INTO v_count_locatie
+    FROM
+        locatie
+    WHERE
+        id_locatie = :new.id_locatie;
+
+    IF v_count_locatie = 0 THEN
+        raise_application_error(-20003, 'Locatia asociata nu exista in tabela locatie.');
+    END IF;
+END;
+/
+
+-- studio lansat in ultimii 4 ani
+INSERT INTO developer (
+    id_developer,
+    id_locatie,
+    nume_developer,
+    data_lansare_studio,
+    salariu_angajati
+) VALUES (
+    13,
+    1,
+    'New Studio',
+    TO_DATE('2023-01-01', 'YYYY-MM-DD'),
+    50000
+);
+
+-- studio deja existent
+INSERT INTO developer (
+    id_developer,
+    id_locatie,
+    nume_developer,
+    data_lansare_studio,
+    salariu_angajati
+) VALUES (
+    14,
+    5,
+    'Kojima Productions',
+    TO_DATE('2005-12-01', 'YYYY-MM-DD'),
+    45000
+);
+
+-- locatia nu exista
+INSERT INTO developer (
+    id_developer,
+    id_locatie,
+    nume_developer,
+    data_lansare_studio,
+    salariu_angajati
+) VALUES (
+    15,
+    99,
+    'Epic Games',
+    TO_DATE('2021-01-01', 'YYYY-MM-DD'),
+    80000
+);
+
+-- insert valid
+INSERT INTO developer (
+    id_developer,
+    id_locatie,
+    nume_developer,
+    data_lansare_studio,
+    salariu_angajati
+) VALUES (
+    20,
+    6,
+    'Riot',
+    TO_DATE('2002-01-01', 'YYYY-MM-DD'),
+    70000
+);
+
+-- //////// EX12 ////////
+
+--cream un tabel de care se va folosi trigger-ul pentru log-uri
+CREATE TABLE log_ldd (
+    id_log      NUMBER
+        GENERATED BY DEFAULT AS IDENTITY
+    PRIMARY KEY,
+    username    VARCHAR2(50),
+    actiune     VARCHAR2(50),
+    tabel_modif VARCHAR2(50),
+    data_modif  DATE
+);
+
+CREATE OR REPLACE TRIGGER trg_ldd AFTER CREATE OR ALTER OR DROP ON SCHEMA DECLARE
+    v_user  VARCHAR2(50);
+    v_tabel VARCHAR2(100);
+    v_ldd   VARCHAR2(50);
+BEGIN
+    v_user := sys_context('USERENV', 'SESSION_USER');
+    v_tabel := ora_dict_obj_name;
+    v_ldd := ora_sysevent;
+    INSERT INTO log_ldd (
+        username,
+        actiune,
+        tabel_modif,
+        data_modif
+    ) VALUES (
+        v_user,
+        v_ldd,
+        v_tabel,
+        systimestamp
+    );
+
+    dbms_output.put_line('S-a detectat o operatie LDD: '
+                         || v_ldd
+                         || ' pe tabelul '
+                         || v_tabel
+                         || ' de user-ul '
+                         || v_user);
+
+END;
+/
+
+SELECT
+    *
+FROM
+    log_ldd;
+
+CREATE TABLE test (
+    nume VARCHAR2(50)
+);
+
+DROP TABLE test;
+
+-- ///////// EX 13 ///////////
+
+CREATE OR REPLACE PROCEDURE afiseaza_iteme_in_inventar (
+    p_id_utilizator NUMBER
+) IS
+BEGIN
+    DECLARE
+        v_exista_utilizator NUMBER;
+    BEGIN
+        SELECT
+            COUNT(*)
+        INTO v_exista_utilizator
+        FROM
+            utilizator
+        WHERE
+            id_utilizator = p_id_utilizator;
+
+        IF v_exista_utilizator = 0 THEN
+            raise_application_error(-20001, 'Utilizatorul nu exista.');
+        END IF;
+    END;
+
+    FOR rec IN (
+        SELECT
+            i.id_item,
+            i.nume_item
+        FROM
+                 inventar_item ii
+            JOIN inventar inv ON ii.id_inventar = inv.id_inventar
+            JOIN item     i ON ii.id_item = i.id_item
+        WHERE
+            inv.id_utilizator = p_id_utilizator
+    ) LOOP
+        dbms_output.put_line('Item ID: '
+                             || rec.id_item
+                             || ', Nume Item: '
+                             || rec.nume_item);
+    END LOOP;
+
+    IF SQL%rowcount = 0 THEN
+        dbms_output.put_line('Utilizatorul nu are iteme in inventar.');
+    END IF;
+END;
+/
+
+CREATE OR REPLACE PROCEDURE afiseaza_jocuri (
+    p_id_developer NUMBER
+) IS
+
+    TYPE joc_record IS RECORD (
+            id_joc             NUMBER(5),
+            id_developer       NUMBER(5),
+            nume_joc           VARCHAR2(50),
+            pret_joc           NUMBER(5),
+            data_lansare_joc   DATE,
+            varsta_recomandata NUMBER(3),
+            rating             NUMBER(1)
+    );
+    TYPE joc_table IS
+        TABLE OF joc_record INDEX BY PLS_INTEGER;
+    v_joc   joc_table;
+    v_index PLS_INTEGER := 0;
+BEGIN
+    -- inserturi pe tabela de jocuri pentru un anumit dezvoltator
+    FOR rec IN (
+        SELECT
+            id_joc,
+            id_developer,
+            nume_joc,
+            pret_joc,
+            data_lansare_joc,
+            varsta_recomandata,
+            rating
+        FROM
+            joc
+        WHERE
+            id_developer = p_id_developer
+    ) LOOP
+        v_index := v_index + 1;
+        v_joc(v_index).id_joc := rec.id_joc;
+        v_joc(v_index).id_developer := rec.id_developer;
+        v_joc(v_index).nume_joc := rec.nume_joc;
+        v_joc(v_index).pret_joc := rec.pret_joc;
+        v_joc(v_index).data_lansare_joc := rec.data_lansare_joc;
+        v_joc(v_index).varsta_recomandata := rec.varsta_recomandata;
+        v_joc(v_index).rating := rec.rating;
+    END LOOP;
+
+    IF v_index > 0 THEN
+        FOR i IN 1..v_index LOOP
+            dbms_output.put_line('ID Joc: '
+                                 || v_joc(i).id_joc
+                                 || ', Nume Joc: '
+                                 || v_joc(i).nume_joc
+                                 || ', Pret: '
+                                 || v_joc(i).pret_joc
+                                 || ', Data Lansare: '
+                                 || to_char(v_joc(i).data_lansare_joc, 'YYYY-MM-DD')
+                                 || ', Varsta Recomandata: '
+                                 || v_joc(i).varsta_recomandata
+                                 || ', Rating: '
+                                 || v_joc(i).rating);
+        END LOOP;
+
+    ELSE
+        dbms_output.put_line('Nu exista jocuri inregistrate pentru dezvoltatorul cu ID: ' || p_id_developer);
+    END IF;
+
+END;
+/
+
+BEGIN
+    afiseaza_jocuri(6);
+END;
+/
+
+CREATE OR REPLACE FUNCTION calculeaza_numar_iteme (
+    p_id_utilizator NUMBER,
+    p_valoare       NUMBER
+) RETURN NUMBER IS
+    v_numar_iteme NUMBER;
+BEGIN
+    SELECT
+        COUNT(*)
+    INTO v_numar_iteme
+    FROM
+             inventar_item ii
+        JOIN inventar inv ON ii.id_inventar = inv.id_inventar
+        JOIN item     i ON ii.id_item = i.id_item
+    WHERE
+            inv.id_utilizator = p_id_utilizator
+        AND i.pret_item > p_valoare;
+
+    RETURN v_numar_iteme;
+END;
+/
+
+
+
+-- ////////// EX13 /////////////
+
+-- Creati un package care afiseaza itemele unui user,
+-- jocurile unui dezvoltator dat, 
+-- numarul de iteme ale utilizatorului care au valoare mai mare decat un pret dat
+-- si jocurile dezvoltate in tara utilizatorului.
+
+CREATE OR REPLACE PACKAGE steam_pack AS
+    -- RECORD pentru jocuri
+    TYPE joc_record IS RECORD (
+            id_joc             NUMBER(5),
+            id_developer       NUMBER(5),
+            nume_joc           VARCHAR2(50),
+            pret_joc           NUMBER(5),
+            data_lansare_joc   DATE,
+            varsta_recomandata NUMBER(3),
+            rating             NUMBER(1)
+    );
+
+    -- RECORD pentru jocuri din tara utilizatorului
+    TYPE jocuri_natale IS RECORD (
+            id_joc         NUMBER(5),
+            nume_joc       VARCHAR2(50),
+            nume_developer VARCHAR2(50),
+            tara           VARCHAR2(50)
+    );
+    TYPE jocuri_natale_table IS
+        TABLE OF jocuri_natale INDEX BY PLS_INTEGER;
+    TYPE joc_table IS
+        TABLE OF joc_record INDEX BY PLS_INTEGER;
+    PROCEDURE afiseaza_iteme_in_inventar (
+        p_id_utilizator NUMBER
+    );
+
+    PROCEDURE afiseaza_jocuri (
+        p_id_developer NUMBER
+    );
+
+    FUNCTION calculeaza_numar_iteme (
+        p_id_utilizator NUMBER,
+        p_valoare       NUMBER
+    ) RETURN NUMBER;
+
+    FUNCTION afisare_jocuri_natale (
+        p_id_utilizator NUMBER
+    ) RETURN jocuri_natale_table;
+
+END steam_pack;
+/
+
+CREATE OR REPLACE PACKAGE BODY steam_pack AS
+
+    PROCEDURE afiseaza_iteme_in_inventar (
+        p_id_utilizator NUMBER
+    ) IS
+        v_exista_utilizator NUMBER;
+    BEGIN
+        SELECT
+            COUNT(*)
+        INTO v_exista_utilizator
+        FROM
+            utilizator
+        WHERE
+            id_utilizator = p_id_utilizator;
+
+        IF v_exista_utilizator = 0 THEN
+            raise_application_error(-20001, 'Utilizatorul nu exista.');
+        END IF;
+        FOR rec IN (
+            SELECT
+                i.id_item,
+                i.nume_item,
+                i.pret_item
+            FROM
+                     inventar_item ii
+                JOIN inventar inv ON ii.id_inventar = inv.id_inventar
+                JOIN item     i ON ii.id_item = i.id_item
+            WHERE
+                inv.id_utilizator = p_id_utilizator
+        ) LOOP
+            IF rec.pret_item IS NOT NULL THEN
+                dbms_output.put_line('Item ID: '
+                                     || rec.id_item
+                                     || ', Nume Item: '
+                                     || rec.nume_item
+                                     || ', Pret: '
+                                     || rec.pret_item);
+
+            ELSE
+                dbms_output.put_line('Item ID: '
+                                     || rec.id_item
+                                     || ', Nume Item: '
+                                     || rec.nume_item);
+            END IF;
+        END LOOP;
+
+        IF SQL%rowcount = 0 THEN
+            dbms_output.put_line('Utilizatorul nu are iteme in inventar.');
+        END IF;
+    END afiseaza_iteme_in_inventar;
+
+    PROCEDURE afiseaza_jocuri (
+        p_id_developer NUMBER
+    ) IS
+        v_joc   joc_table;
+        v_index PLS_INTEGER := 0;
+    BEGIN
+        FOR rec IN (
+            SELECT
+                id_joc,
+                id_developer,
+                nume_joc,
+                pret_joc,
+                data_lansare_joc,
+                varsta_recomandata,
+                rating
+            FROM
+                joc
+            WHERE
+                id_developer = p_id_developer
+        ) LOOP
+            v_index := v_index + 1;
+            v_joc(v_index).id_joc := rec.id_joc;
+            v_joc(v_index).id_developer := rec.id_developer;
+            v_joc(v_index).nume_joc := rec.nume_joc;
+            v_joc(v_index).pret_joc := rec.pret_joc;
+            v_joc(v_index).data_lansare_joc := rec.data_lansare_joc;
+            v_joc(v_index).varsta_recomandata := rec.varsta_recomandata;
+            v_joc(v_index).rating := rec.rating;
+        END LOOP;
+
+        IF v_index > 0 THEN
+            FOR i IN 1..v_index LOOP
+                dbms_output.put_line('ID Joc: '
+                                     || v_joc(i).id_joc
+                                     || ', Nume Joc: '
+                                     || v_joc(i).nume_joc
+                                     || ', Pret: '
+                                     || v_joc(i).pret_joc
+                                     || ', Data Lansare: '
+                                     || to_char(v_joc(i).data_lansare_joc, 'YYYY-MM-DD')
+                                     || ', Varsta Recomandata: '
+                                     || v_joc(i).varsta_recomandata
+                                     || ', Rating: '
+                                     || v_joc(i).rating);
+            END LOOP;
+
+        ELSE
+            dbms_output.put_line('Nu exista jocuri inregistrate pentru dezvoltatorul cu ID: ' || p_id_developer);
+        END IF;
+
+    END afiseaza_jocuri;
+
+    FUNCTION calculeaza_numar_iteme (
+        p_id_utilizator NUMBER,
+        p_valoare       NUMBER
+    ) RETURN NUMBER IS
+        v_numar_iteme NUMBER;
+    BEGIN
+        SELECT
+            COUNT(*)
+        INTO v_numar_iteme
+        FROM
+                 inventar_item ii
+            JOIN inventar inv ON ii.id_inventar = inv.id_inventar
+            JOIN item     i ON ii.id_item = i.id_item
+        WHERE
+                inv.id_utilizator = p_id_utilizator
+            AND i.pret_item > p_valoare;
+
+        RETURN v_numar_iteme;
+    END calculeaza_numar_iteme;
+
+    FUNCTION afisare_jocuri_natale (
+        p_id_utilizator NUMBER
+    ) RETURN jocuri_natale_table IS
+        v_jocuri    jocuri_natale_table;
+        v_index     PLS_INTEGER := 0;
+        v_id_tara   NUMBER;
+        v_nume_tara VARCHAR2(50);
+    BEGIN
+
+        SELECT
+            id_tara
+        INTO v_id_tara
+        FROM
+            utilizator
+        WHERE
+            id_utilizator = p_id_utilizator;
+
+        SELECT
+            nume_tara
+        INTO v_nume_tara
+        FROM
+            tara
+        WHERE
+            id_tara = v_id_tara;
+
+        FOR rec IN (
+            SELECT
+                j.id_joc,
+                j.nume_joc,
+                d.nume_developer
+            FROM
+                     joc j
+                JOIN developer d ON j.id_developer = d.id_developer
+                JOIN locatie   loc ON d.id_locatie = loc.id_locatie
+            WHERE
+                loc.id_tara = v_id_tara
+        ) LOOP
+            v_index := v_index + 1;
+            v_jocuri(v_index).id_joc := rec.id_joc;
+            v_jocuri(v_index).nume_joc := rec.nume_joc;
+            v_jocuri(v_index).nume_developer := rec.nume_developer;
+            v_jocuri(v_index).tara := v_nume_tara;
+        END LOOP;
+
+        RETURN v_jocuri;
+    END afisare_jocuri_natale;
+
+END steam_pack;
+/
+
+DECLARE
+    v_jocuri steam_pack.jocuri_natale_table;
+BEGIN
+    dbms_output.put_line('Toate itemele utilizatorului: ');
+    steam_pack.afiseaza_iteme_in_inventar(1); -- id user
+    dbms_output.put_line('Toate jocurile dezvoltatorului: ');
+    steam_pack.afiseaza_jocuri(6); -- id dezvoltator
+    dbms_output.put_line('Numarul de iteme cu pret mai mare de 50 din inventarul utilizatorului: '
+                         || steam_pack.calculeaza_numar_iteme(1, 50)); -- id user
+
+    v_jocuri := steam_pack.afisare_jocuri_natale(1); -- id user
+
+    dbms_output.put_line('Toate jocurile dezvoltate in tara utilizatorului: ');
+    FOR i IN 1..v_jocuri.count LOOP
+        dbms_output.put_line('ID Joc: '
+                             || v_jocuri(i).id_joc
+                             || ', Nume Joc: '
+                             || v_jocuri(i).nume_joc
+                             || ', Nume Developer: '
+                             || v_jocuri(i).nume_developer
+                             || ', Tara: '
+                             || v_jocuri(i).tara);
+    END LOOP;
+
+END;
+/
